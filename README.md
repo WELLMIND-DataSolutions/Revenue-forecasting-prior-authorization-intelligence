@@ -244,41 +244,6 @@ Dashboard sections:
 - Plan Intelligence
 - Validation
 
-## Notebooks
-
-| Notebook | Purpose |
-| --- | --- |
-| `01_data_inventory_and_quality.ipynb` | Data inventory, source checks, file coverage, and quality gate. |
-| `02_ma_enrollment_eda.ipynb` | Deep EDA with missing value, duplicate, suppression, outlier, trend, and geography analysis. |
-| `03_revenue_opportunity_forecasting.ipynb` | Forecast modeling, holdout evaluation, and 90-day projection logic. |
-| `04_cpsc_plan_level_analysis.ipynb` | Contract/plan/state analysis for sales-targeting intelligence. |
-| `05_prior_auth_risk_scoring_demo.ipynb` | CMS-aligned PA denial-risk scoring prototype. |
-| `06_model_evaluation_and_validation.ipynb` | Model validation, assumptions, limitations, and final decision table. |
-| `07_dashboard_export_assets.ipynb` | Dashboard-ready tables and evidence assets. |
-
-GitHub sometimes does not render the full `02_ma_enrollment_eda.ipynb` notebook because it is output-heavy. Use the rendered EDA report instead:
-
-- [`docs/02_ma_enrollment_eda_visual_report.md`](docs/02_ma_enrollment_eda_visual_report.md): GitHub-readable EDA report with 28 static graphs and explanations.
-
-## Dashboard Notes
-
-The Streamlit dashboard is not just a pipeline output viewer. It is organized around the original business deliverables:
-
-- What will the next 90 days look like?
-- Which markets are growing?
-- Which PA requests need stronger documentation?
-- Which requests may be delayed?
-- Which plan/geography combinations are useful for sales conversations?
-- What should reviewers trust, and what should they not overclaim?
-
-## Limitations
-
-- Public CMS files do not contain provider-specific collections, remits, denials, or request-level prior authorization outcomes.
-- The revenue number is a transparent PMPM opportunity proxy.
-- PA prediction is a demo risk-prioritization model, not a production payer-specific denial model.
-- Forecast history is short, so simple baselines can outperform heavier models.
-- CMS-suppressed values are not imputed into false precision.
-
 ## Git Workflow
 
 ```powershell
