@@ -4,6 +4,98 @@ Public CMS-data MVP for RCM teams that need a 90-day revenue-opportunity forecas
 
 The project uses public CMS Medicare Advantage enrollment, plan, and prior-authorization policy/reporting sources. Revenue is modeled as an enrollment-based opportunity proxy, not actual collections, remit, or claim payment forecasting.
 
+## What the Project Does
+
+This project builds an end-to-end analytics MVP for revenue cycle management teams. It downloads public CMS Medicare Advantage data, prepares modeling-ready enrollment tables, runs EDA, evaluates forecasting models, creates prior authorization and delay-risk scoring demos, and serves the results in a Streamlit executive dashboard.
+
+Main outputs:
+
+- 90-day enrollment and proxy revenue opportunity forecast.
+- Growth opportunity analytics by state, county, plan type, and optional CPSC plan data.
+- Prior authorization risk queue with documentation-strengthening recommendations.
+- Auth delay risk queue based on CMS timing expectations.
+- Validation tables, notebooks, and dashboard-ready exports.
+
+## Why the Project Is Useful
+
+RCM teams need early signals before revenue or authorization problems become operational bottlenecks. This MVP shows how public CMS data can support sales and strategy conversations without using PHI, gated payer files, or client-specific claims data.
+
+It is useful because it:
+
+- Turns fragmented public CMS files into a reproducible analytics pipeline.
+- Separates actual public-data evidence from proxy assumptions.
+- Shows which geographies and plan types are growing.
+- Gives a practical first version of PA denial-risk and delay-risk prioritization.
+- Documents limitations clearly so reviewers know what can and cannot be claimed.
+
+## How Users Can Get Started
+
+Quick start on Windows PowerShell:
+
+```powershell
+git clone https://github.com/WELLMIND-DataSolutions/Revenue-forecasting-prior-authorization-intelligence.git
+cd Revenue-forecasting-prior-authorization-intelligence
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r .\requirements.txt
+python -m pip install -r .\requirements-optional.txt
+.\scripts\download_data.ps1
+.\scripts\download_optional_data.ps1
+.\scripts\run_pipeline.ps1
+.\scripts\run_dashboard.ps1
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8501
+```
+
+For notebook review, start Jupyter with:
+
+```powershell
+.\scripts\start_jupyter.ps1
+```
+
+## Where Users Can Get Help
+
+Use these project files first:
+
+- `README.md`: setup, install, run, dashboard, and repository structure.
+- `RND.md`: research decisions, modeling choices, assumptions, experiments, and limitations.
+- `PPT.md`: presentation-ready high-level summary.
+- `docs/dataset_register.md`: dataset list and source notes.
+- `docs/assumptions.md`: modeling and business assumptions.
+- `docs/validation_checklist.md`: validation checklist.
+- `docs/02_ma_enrollment_eda_visual_report.md`: GitHub-readable EDA report with static graphs.
+
+If something fails locally, check:
+
+- Whether `.venv` is activated.
+- Whether data scripts have downloaded files into `data/raw/`.
+- Whether `.\scripts\run_pipeline.ps1` has created `data/processed/` and `reports/tables/`.
+- Whether Streamlit is running at `http://127.0.0.1:8501`.
+
+For repository collaboration, open a GitHub issue or contact the maintainers/contributors listed below.
+
+## Who Maintains and Contributes
+
+Maintained by:
+
+- WELLMIND DataSolutions project team.
+- Shahneela Zafar / project contributor.
+
+Contributions can include:
+
+- Data-source updates.
+- Modeling improvements.
+- Dashboard improvements.
+- Documentation fixes.
+- Validation and testing additions.
+
+Before contributing, keep the core guardrail: do not overclaim public CMS data as actual provider collections, remits, or payer-specific PA outcomes.
+
 ## Repository File Guide
 
 | File | Audience | Tells |
