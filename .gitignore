@@ -8,4 +8,7 @@ models/
 reports/figures/
 reports/tables/
 *.log
-
+notebooks/
+RND.md
+PPT.md
+requirements-optional.txt

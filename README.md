@@ -14,7 +14,7 @@ Main outputs:
 - Growth opportunity analytics by state, county, plan type, and optional CPSC plan data.
 - Prior authorization risk queue with documentation-strengthening recommendations.
 - Auth delay risk queue based on CMS timing expectations.
-- Validation tables, notebooks, and dashboard-ready exports.
+- Validation tables and dashboard-ready exports.
 
 ## Why the Project Is Useful
 
@@ -39,7 +39,6 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r .\requirements.txt
-python -m pip install -r .\requirements-optional.txt
 .\scripts\download_data.ps1
 .\scripts\download_optional_data.ps1
 .\scripts\run_pipeline.ps1
@@ -52,7 +51,7 @@ Then open:
 http://127.0.0.1:8501
 ```
 
-For notebook review, start Jupyter with:
+If you have the local-only notebooks folder, start Jupyter with:
 
 ```powershell
 .\scripts\start_jupyter.ps1
@@ -63,8 +62,6 @@ For notebook review, start Jupyter with:
 Use these project files first:
 
 - `README.md`: setup, install, run, dashboard, and repository structure.
-- `RND.md`: research decisions, modeling choices, assumptions, experiments, and limitations.
-- `PPT.md`: presentation-ready high-level summary.
 - `docs/dataset_register.md`: dataset list and source notes.
 - `docs/assumptions.md`: modeling and business assumptions.
 - `docs/validation_checklist.md`: validation checklist.
@@ -101,8 +98,8 @@ Before contributing, keep the core guardrail: do not overclaim public CMS data a
 | File | Audience | Tells |
 | --- | --- | --- |
 | `README.md` | User / Developer | How to set up, install, run the pipeline, launch dashboard, and understand repo structure. |
-| `RND.md` | Interviewer / Reviewer / Researcher | How the project was built, why decisions were made, what experiments were run, and what limitations exist. |
-| `PPT.md` | Presentation audience | High-level slide-style project summary for demo, viva, stakeholder review, or pitch. |
+| `docs/` | Reviewer / Developer | Dataset register, assumptions, validation checklist, and rendered EDA report. |
+| `src/dashboard/app.py` | User / Developer | Streamlit dashboard implementation. |
 
 ## Business Objective
 
@@ -146,14 +143,6 @@ rcm-cms-mvp/
     assumptions.md
     dataset_register.md
     validation_checklist.md
-  notebooks/
-    01_data_inventory_and_quality.ipynb
-    02_ma_enrollment_eda.ipynb
-    03_revenue_opportunity_forecasting.ipynb
-    04_cpsc_plan_level_analysis.ipynb
-    05_prior_auth_risk_scoring_demo.ipynb
-    06_model_evaluation_and_validation.ipynb
-    07_dashboard_export_assets.ipynb
   scripts/
     download_data.ps1
     download_optional_data.ps1
@@ -166,13 +155,10 @@ rcm-cms-mvp/
     dashboard/
     models/
   README.md
-  RND.md
-  PPT.md
   requirements.txt
-  requirements-optional.txt
 ```
 
-Generated local folders such as `data/raw/`, `data/processed/`, `reports/tables/`, `reports/figures/`, `models/`, `.venv/`, and logs are intentionally ignored by Git.
+Generated local folders such as `data/raw/`, `data/processed/`, `reports/tables/`, `reports/figures/`, `models/`, `.venv/`, notebooks, and logs are intentionally ignored by Git.
 
 ## Setup
 
@@ -183,10 +169,9 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r .\requirements.txt
-python -m pip install -r .\requirements-optional.txt
 ```
 
-`requirements-optional.txt` contains TensorFlow for optional LSTM experimentation. The core MVP runs without depending on LSTM as the headline model.
+Optional local-only dependencies, notebooks, and presentation/research notes are not published to the Wellmind GitHub repository.
 
 ## Download Data
 
