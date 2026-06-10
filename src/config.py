@@ -18,12 +18,6 @@ CPSC_DIR = RAW_DIR / "cpsc"
 EXPECTED_START = "2024-01"
 EXPECTED_END = "2026-05"
 
-# EDA result: national observed enrollment increased 7.79% across 29 months.
-# Use a transparent PMPM proxy assumption only for opportunity framing.
-PMPM_PROXY_REVENUE = 115.0
-
-
 def ensure_dirs() -> None:
     for path in [PROCESSED_DIR, MODEL_DIR, TABLE_DIR, FIGURE_DIR]:
         path.mkdir(parents=True, exist_ok=True)
-

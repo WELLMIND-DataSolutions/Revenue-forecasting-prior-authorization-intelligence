@@ -1,19 +1,19 @@
-# Revenue Forecasting & Prior Authorization Intelligence
+# RCM Opportunity Forecasting & Prior Authorization Intelligence
 
-Public CMS-data MVP for RCM teams that need a 90-day revenue-opportunity forecast, prior authorization denial-risk triage, auth delay flags, and Medicare Advantage growth opportunity analytics.
+Public CMS-data MVP for RCM teams that need a 90-day enrollment opportunity forecast, prior authorization exposure triage, authorization timing exposure flags, and Medicare Advantage growth opportunity analytics.
 
-The project uses public CMS Medicare Advantage enrollment, plan, and prior-authorization policy/reporting sources. Revenue is modeled as an enrollment-based opportunity proxy, not actual collections, remit, or claim payment forecasting.
+The project uses public CMS Medicare Advantage enrollment, penetration, plan, and prior-authorization benefit fields. It does not use synthetic denial labels or PMPM revenue assumptions.
 
 ## What the Project Does
 
-This project builds an end-to-end analytics MVP for revenue cycle management teams. It downloads public CMS Medicare Advantage data, prepares modeling-ready enrollment tables, runs EDA, evaluates forecasting models, creates prior authorization and delay-risk scoring demos, and serves the results in a Streamlit executive dashboard.
+This project builds an end-to-end analytics MVP for revenue cycle management teams. It downloads public CMS Medicare Advantage data, prepares modeling-ready enrollment tables, runs EDA, evaluates forecasting models, creates prior authorization and timing-exposure scores from CMS benefit fields, and serves the results in a Streamlit executive dashboard.
 
 Main outputs:
 
-- 90-day enrollment and proxy revenue opportunity forecast.
+- 90-day observed enrollment opportunity forecast.
 - Growth opportunity analytics by state, county, plan type, and optional CPSC plan data.
-- Prior authorization risk queue with documentation-strengthening recommendations.
-- Auth delay risk queue based on CMS timing expectations.
+- Prior authorization exposure queue with documentation-strengthening recommendations.
+- Authorization timing exposure queue based on CMS timing guardrails.
 - Validation tables and dashboard-ready exports.
 
 ## Why the Project Is Useful
@@ -23,9 +23,9 @@ RCM teams need early signals before revenue or authorization problems become ope
 It is useful because it:
 
 - Turns fragmented public CMS files into a reproducible analytics pipeline.
-- Separates actual public-data evidence from proxy assumptions.
+- Separates public-data evidence from unsupported revenue or denial claims.
 - Shows which geographies and plan types are growing.
-- Gives a practical first version of PA denial-risk and delay-risk prioritization.
+- Gives a practical first version of PA exposure and timing-exposure prioritization.
 - Documents limitations clearly so reviewers know what can and cannot be claimed.
 
 ## How Users Can Get Started
@@ -105,21 +105,21 @@ Before contributing, keep the core guardrail: do not overclaim public CMS data a
 
 Client hook:
 
-> We tell you what next month's collections opportunity may look like and which prior authorization requests are likely to get denied or delayed, so the team can strengthen documentation before submission.
+> We show where CMS enrollment opportunity is moving and which Medicare Advantage plans have higher prior-authorization exposure, so RCM teams can prioritize outreach and documentation workflows.
 
 MVP deliverables covered:
 
 - Forecast dashboard with CMS trend lines and 90-day projection.
-- Prior authorization risk queue with documentation recommendations.
-- Auth delay risk table for high-delay procedure-payer combinations.
+- Prior authorization exposure queue with documentation recommendations.
+- Authorization timing exposure table based on CMS timing guardrails.
 - Growth opportunity report by geography and plan.
 - Validation summary with assumptions, model metrics, and public-data guardrails.
 
 RCM problems covered:
 
-- Prior auth prediction
-- Auth delay risk
-- Revenue forecasting
+- Prior authorization exposure prioritization
+- Authorization timing exposure
+- Enrollment opportunity forecasting
 - Growth opportunity analytics
 
 ## Current Results
@@ -127,11 +127,10 @@ RCM problems covered:
 - CMS enrollment data window: January 2024 through May 2026.
 - National observed MA enrollment increased from about 33.48M to 36.08M.
 - Forecast target: `observed_enrollment`.
-- Revenue proxy: `proxy_revenue = observed_enrollment * 115 PMPM`.
 - Best forecast model on 3-month holdout: `linear_drift`.
 - Observed-enrollment holdout MAPE: about `0.048%`.
-- PA demo model accuracy: about `93.3%`.
-- Auth delay module flags high-risk combinations before submission.
+- PA exposure engine reviews CMS PBP benefit fields; it is not a denial predictor.
+- Auth timing module flags high-exposure plans against CMS standard and expedited timing guardrails.
 - Suppressed CMS rows are retained and flagged instead of dropped.
 - Outliers are flagged for review instead of removed.
 

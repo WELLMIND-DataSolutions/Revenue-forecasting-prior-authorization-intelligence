@@ -7,7 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.config import PMPM_PROXY_REVENUE, PROCESSED_DIR, TABLE_DIR
+from src.config import PROCESSED_DIR, TABLE_DIR
 
 
 st.set_page_config(page_title="RCM Intelligence MVP", layout="wide")
@@ -35,7 +35,9 @@ def load_data() -> dict[str, pd.DataFrame | dict]:
         "monthly": pd.read_parquet(PROCESSED_DIR / "ma_scp_monthly_national.parquet"),
         "forecast": pd.read_csv(PROCESSED_DIR / "forecast_results.csv", parse_dates=["ds"]),
         "forecast_metrics": pd.read_csv(TABLE_DIR / "forecast_metrics.csv"),
-        "state_growth": pd.read_csv(TABLE_DIR / "ma_scp_state_growth.csv"),
+        "state_growth": pd.read_csv(TABLE_DIR / "dashboard_state_opportunities.csv"),
+        "county_opportunities": pd.read_csv(TABLE_DIR / "dashboard_county_opportunities.csv"),
+        "opportunity_method": pd.read_csv(TABLE_DIR / "opportunity_score_methodology.csv"),
         "state_monthly": pd.read_parquet(PROCESSED_DIR / "ma_scp_state_monthly.parquet"),
         "plan_monthly": pd.read_parquet(PROCESSED_DIR / "ma_scp_plan_monthly.parquet"),
         "pa": pd.read_csv(PROCESSED_DIR / "pa_predictions.csv"),
@@ -68,15 +70,6 @@ def money(value: float) -> str:
     return f"${value:,.0f}"
 
 
-def risk_recommendation(row: pd.Series) -> str:
-    risk = row.get("hybrid_risk_bucket", "")
-    if risk == "high":
-        return "Strengthen documentation before submission"
-    if risk == "medium":
-        return "Check medical-necessity criteria"
-    return "Standard submission path"
-
-
 def section_header(title: str, subtitle: str) -> None:
     st.subheader(title)
     st.caption(subtitle)
@@ -91,8 +84,6 @@ def csv_bytes(frame: pd.DataFrame) -> bytes:
 
 
 def target_series(monthly_frame: pd.DataFrame, target: str) -> pd.Series:
-    if target == "proxy_revenue":
-        return monthly_frame["observed_enrollment"] * PMPM_PROXY_REVENUE
     return monthly_frame[target]
 
 
@@ -139,6 +130,8 @@ monthly = data["monthly"].copy()
 forecast = data["forecast"].copy()
 metrics = data["forecast_metrics"].copy()
 state_growth = data["state_growth"].copy()
+county_opportunities = data["county_opportunities"].copy()
+opportunity_method = data["opportunity_method"].copy()
 state_monthly = data["state_monthly"].copy()
 plan_monthly = data["plan_monthly"].copy()
 pa = data["pa"].copy()
@@ -157,7 +150,6 @@ state_growth["state_name"] = state_growth["state"].map(STATE_NAME).fillna(state_
 
 best_models = metrics.sort_values(["target", "mape"]).groupby("target", as_index=False).first()
 best_enrollment = best_models[best_models["target"].eq("observed_enrollment")].iloc[0]
-best_revenue = best_models[best_models["target"].eq("proxy_revenue")].iloc[0]
 best_model = best_enrollment["model"]
 
 latest_month = monthly["report_month"].max()
@@ -173,17 +165,13 @@ final_future = headline_forecast.iloc[-1]
 next_month_delta = next_month["yhat"] - latest_enrollment
 ninety_day_delta = final_future["yhat"] - latest_enrollment
 
-revenue_forecast = future_forecast(forecast, monthly, "proxy_revenue", best_revenue["model"])
-
-pa["recommendation"] = pa.apply(risk_recommendation, axis=1)
-high_pa = pa[pa["hybrid_risk_bucket"].eq("high")]
+high_pa = pa[pa["risk_bucket"].eq("high")]
 delay_high = delay[delay["risk_bucket"].eq("high")]
 
 with st.sidebar:
     st.title("MVP Control Panel")
-    st.caption("Revenue forecasting, prior authorization risk, delay risk, and growth opportunity from public CMS data.")
+    st.caption("Enrollment opportunity forecasting, prior authorization exposure, timing exposure, and growth opportunity from public CMS data.")
     st.metric("CMS data window", f"{monthly['report_month'].min():%b %Y} - {latest_label}")
-    st.metric("Proxy PMPM", money(PMPM_PROXY_REVENUE))
     st.divider()
     st.markdown("**Dashboard filters**")
     state_top_n = st.slider("Growth markets shown", min_value=10, max_value=50, value=25, step=5)
@@ -193,9 +181,9 @@ with st.sidebar:
         default=["high", "medium", "low"],
     )
     payer_filter = st.multiselect(
-        "PA payer types",
-        options=sorted(pa["payer_type"].dropna().unique().tolist()),
-        default=sorted(pa["payer_type"].dropna().unique().tolist()),
+        "Plan types",
+        options=sorted(pa["plan_type"].dropna().unique().tolist()),
+        default=sorted(pa["plan_type"].dropna().unique().tolist()),
     )
     delay_bucket_filter = st.multiselect(
         "Delay risk buckets",
@@ -204,10 +192,11 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("**Public-data guardrail**")
-    st.caption("Revenue is an enrollment-based opportunity proxy. PA labels are demo labels aligned to CMS policy/reporting context.")
+    st.caption("No synthetic denial labels or PMPM revenue assumptions are used. PA and timing views are public CMS exposure scores, not denial predictions.")
 
 filtered_state_growth = state_growth.head(state_top_n)
-filtered_pa = pa[pa["hybrid_risk_bucket"].isin(pa_bucket_filter) & pa["payer_type"].isin(payer_filter)].copy()
+filtered_county = county_opportunities.head(state_top_n)
+filtered_pa = pa[pa["risk_bucket"].isin(pa_bucket_filter) & pa["plan_type"].isin(payer_filter)].copy()
 filtered_delay = delay[delay["risk_bucket"].isin(delay_bucket_filter)].copy()
 
 st.markdown(
@@ -224,16 +213,16 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.title("RCM Revenue Forecasting & Prior Authorization Intelligence")
-st.caption("Executive MVP dashboard built from public CMS Medicare Advantage enrollment, plan, and prior-authorization policy/reporting sources.")
+st.title("RCM Opportunity Forecasting & Prior Authorization Intelligence")
+st.caption("Executive MVP dashboard built from public CMS Medicare Advantage enrollment, penetration, plan, and prior-authorization benefit fields.")
 
 overview, forecast_tab, growth_tab, pa_tab, delay_tab, plan_tab, validation_tab = st.tabs(
     [
         "Executive View",
         "90-Day Forecast",
         "Growth Opportunity",
-        "Prior Auth Intelligence",
-        "Auth Delay Risk",
+        "PA Risk Prioritization",
+        "Auth Timing Exposure",
         "Plan Intelligence",
         "Validation",
     ]
@@ -250,16 +239,16 @@ with overview:
     with c2:
         metric_card("90-day projected enrollment lift", whole(ninety_day_delta), f"Model: {best_model}")
     with c3:
-        metric_card("High-risk PA cases", whole(len(high_pa)), "Demo risk queue requiring stronger documentation")
+        metric_card("High PA exposure plans", whole(len(high_pa)), "Plans with many CMS PBP authorization categories")
     with c4:
-        metric_card("High-delay combinations", whole(len(delay_high)), "Procedure/payer/urgency combinations above CMS timing threshold")
+        metric_card("High timing exposure plans", whole(len(delay_high)), "Plans with high authorization-category exposure against CMS timing guardrails")
 
     st.markdown(
         f"""
         <div class="deliverable-note">
         <b>Client hook:</b> next 90 days show an estimated <b>{whole(ninety_day_delta)}</b> additional observed MA enrollment
-        on the public CMS trend line. PA intelligence flags <b>{len(high_pa)}</b> high-risk demo requests and
-        <b>{len(delay_high)}</b> high-delay combinations before submission.
+        on the public CMS trend line. CMS PBP benefit fields identify <b>{len(high_pa)}</b> high prior-authorization exposure plans and
+        <b>{len(delay_high)}</b> high timing-exposure plans for operational review.
         </div>
         """,
         unsafe_allow_html=True,
@@ -273,8 +262,8 @@ with overview:
         fig.update_layout(title="Actual CMS Enrollment Trend + 90-Day Projection", xaxis_title="", yaxis_title="Observed enrollment", height=390)
         st.plotly_chart(fig, width="stretch")
     with right:
-        top_states = filtered_state_growth.head(7)[["state", "state_name", "absolute_growth", "growth_pct", "last_enrollment"]]
-        st.markdown("**Top growth geographies**")
+        top_states = filtered_state_growth.head(7)[["state", "state_name", "opportunity_score", "absolute_growth", "growth_pct", "last_enrollment"]]
+        st.markdown("**Top opportunity geographies**")
         st.dataframe(
             top_states.rename(
                 columns={
@@ -282,6 +271,7 @@ with overview:
                     "state_name": "Market",
                     "absolute_growth": "Enrollment lift",
                     "growth_pct": "Growth %",
+                    "opportunity_score": "Opportunity score",
                     "last_enrollment": "Latest enrollment",
                 }
             ),
@@ -292,8 +282,8 @@ with overview:
     st.markdown("**Deliverable coverage**")
     d1, d2, d3 = st.columns(3)
     d1.success("Forecast dashboard: CMS trend + 90-day projection")
-    d2.success("PA intelligence: risk queue + model benchmark")
-    d3.success("Growth opportunity: geography + plan-level expansion")
+    d2.success("PA intelligence: CMS PBP exposure queue + recommendations")
+    d3.success("Growth opportunity: CMS growth + penetration ranking")
     st.download_button(
         "Download executive forecast extract",
         data=csv_bytes(headline_forecast),
@@ -303,22 +293,18 @@ with overview:
 
 with forecast_tab:
     section_header(
-        "Forecast Dashboard",
-        "Forecast vs actuals, model benchmark, and transparent proxy revenue projection.",
+        "Enrollment Opportunity Forecast",
+        "Forecast vs actuals, model benchmark, and transparent public-data limitation statement.",
     )
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
     c1.metric("Best model", best_model)
     c2.metric("Holdout MAPE", pct(best_enrollment["mape"]))
     c3.metric("Next-month enrollment lift", whole(next_month_delta))
-    c4.metric("90-day proxy revenue lift", money(revenue_forecast.iloc[-1]["yhat"] - (latest_enrollment * PMPM_PROXY_REVENUE)))
-
-    target_label = st.radio("Business view", ["Enrollment opportunity", "Proxy revenue opportunity"], horizontal=True)
-    target = "observed_enrollment" if target_label == "Enrollment opportunity" else "proxy_revenue"
+    target_label = "Observed enrollment opportunity"
+    target = "observed_enrollment"
     selected_best = best_models[best_models["target"].eq(target)].iloc[0]["model"]
     selected = forecast[forecast["target"].eq(target) & forecast["model"].eq(selected_best)].sort_values("ds")
     actual = monthly[["report_month", "observed_enrollment"]].rename(columns={"report_month": "ds", "observed_enrollment": "actual"})
-    if target == "proxy_revenue":
-        actual["actual"] = actual["actual"] * PMPM_PROXY_REVENUE
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=actual["ds"], y=actual["actual"], mode="lines+markers", name="CMS actual"))
@@ -340,29 +326,29 @@ with forecast_tab:
         st.write(
             "The dashboard headlines the lowest holdout-MAPE model. Prophet remains in the benchmark, but the short 29-month series favors the simpler linear drift model."
         )
-        st.write("Revenue is shown as a PMPM proxy. It is not actual collections or remittance data.")
+        st.write("No PMPM revenue assumption is used. The forecast is an enrollment opportunity signal from public CMS data.")
 
 with growth_tab:
     section_header(
-        "Growth Opportunity Report",
-        "Geographic markets ranked by observed enrollment growth, scale, and volatility.",
+        "Growth Opportunity Ranking",
+        "Markets ranked using CMS growth, enrollment scale, MA penetration, and momentum.",
     )
     c1, c2, c3 = st.columns(3)
     c1.metric("National growth since Jan 2024", whole(national_growth), pct(national_growth_pct))
-    c2.metric("Top state", state_growth.iloc[0]["state_name"], whole(state_growth.iloc[0]["absolute_growth"]))
-    c3.metric("Tracked county keys", whole(pd.read_csv(TABLE_DIR / "ma_scp_forecasting_readiness.csv").iloc[0]["county_key_count"]))
+    c2.metric("Top state score", state_growth.iloc[0]["state"], f"{state_growth.iloc[0]['opportunity_score']:.1f}")
+    c3.metric("Top county score", f"{county_opportunities.iloc[0]['state']} {county_opportunities.iloc[0]['county']}", f"{county_opportunities.iloc[0]['opportunity_score']:.1f}")
 
     map_data = filtered_state_growth[filtered_state_growth["state"].isin(STATE_NAME)].copy()
     fig = px.choropleth(
         map_data,
         locations="state",
         locationmode="USA-states",
-        color="absolute_growth",
+        color="opportunity_score",
         scope="usa",
         hover_name="state_name",
-        hover_data={"growth_pct": ":.2%", "last_enrollment": ":,.0f", "absolute_growth": ":,.0f", "state": False},
+        hover_data={"growth_pct": ":.2%", "last_enrollment": ":,.0f", "ma_penetration": ":.2%", "state": False},
         color_continuous_scale="Blues",
-        title="Regional opportunity heatmap: absolute enrollment growth",
+        title="Regional opportunity heatmap: CMS-based opportunity score",
     )
     fig.update_layout(height=520)
     st.plotly_chart(fig, width="stretch")
@@ -373,21 +359,34 @@ with growth_tab:
             filtered_state_growth,
             x="last_enrollment",
             y="growth_pct",
-            size=filtered_state_growth["absolute_growth"].abs().clip(lower=1),
+            size=filtered_state_growth["opportunity_score"].clip(lower=1),
+            color="ma_penetration",
             hover_name="state_name",
-            title="Market scale vs growth rate",
+            title="Market scale vs growth rate, colored by MA penetration",
         )
         st.plotly_chart(fig, width="stretch")
     with right:
-        fig = px.bar(filtered_state_growth.head(15), x="state", y="absolute_growth", title="Top states by enrollment lift")
+        fig = px.bar(filtered_state_growth.head(15), x="state", y="opportunity_score", title="Top states by opportunity score")
         st.plotly_chart(fig, width="stretch")
 
-    with st.expander("Open growth opportunity table"):
+    left, right = st.columns([1, 1])
+    with left:
+        st.markdown("**Top 20 state markets**")
         st.dataframe(
-            filtered_state_growth[["state", "state_name", "last_enrollment", "absolute_growth", "growth_pct", "volatility_mom_growth_pct", "counties"]],
+            filtered_state_growth[["state", "state_name", "opportunity_score", "last_enrollment", "growth_pct", "ma_penetration", "recommendation"]].head(20),
             width="stretch",
             hide_index=True,
         )
+    with right:
+        st.markdown("**Top 20 county markets**")
+        st.dataframe(
+            filtered_county[["state", "county", "opportunity_score", "last_enrollment", "growth_pct", "ma_penetration", "recommendation"]].head(20),
+            width="stretch",
+            hide_index=True,
+        )
+    with st.expander("Opportunity score methodology"):
+        st.dataframe(opportunity_method, width="stretch", hide_index=True)
+        st.write("These are ranking weights, not revenue assumptions. Every score component is derived from public CMS enrollment or penetration data.")
         st.download_button(
             "Download growth opportunity report",
             data=csv_bytes(filtered_state_growth),
@@ -397,46 +396,47 @@ with growth_tab:
 
 with pa_tab:
     section_header(
-        "Prior Authorization Intelligence",
-        "Risk queue for requests that need documentation strengthening before submission.",
+        "Prior Authorization Risk Prioritization Engine",
+        "CMS PBP benefit-field exposure queue. This is not a supervised denial predictor because public CMS files do not contain request-level outcomes.",
     )
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Demo model accuracy", pct(pa_metrics.iloc[0]["accuracy"]))
-    c2.metric("ROC AUC", f"{pa_metrics.iloc[0]['roc_auc']:.3f}")
-    c3.metric("High-risk requests", whole(len(high_pa)))
-    c4.metric("Highest risk score", f"{pa['hybrid_denial_risk'].max():.3f}")
+    c1.metric("Plans reviewed", whole(pa_metrics.iloc[0]["plans_reviewed"]))
+    c2.metric("Plans with PA required", whole(pa_metrics.iloc[0]["plans_with_prior_auth_required"]))
+    c3.metric("High exposure plans", whole(len(high_pa)))
+    c4.metric("Max exposure score", f"{pa['prior_auth_exposure_score'].max():.3f}")
 
     left, right = st.columns([1.1, 1])
     with left:
         fig = px.histogram(
             filtered_pa,
-            x="hybrid_denial_risk",
-            color="hybrid_risk_bucket",
-            title="Denial-risk distribution",
+            x="prior_auth_exposure_score",
+            color="risk_bucket",
+            title="Prior authorization exposure distribution",
             color_discrete_map={"low": "#22c55e", "medium": "#f59e0b", "high": "#ef4444"},
         )
         st.plotly_chart(fig, width="stretch")
     with right:
         risk_by_proc = (
-            filtered_pa.groupby(["procedure_type", "payer_type"], as_index=False)
-            .agg(avg_denial_risk=("hybrid_denial_risk", "mean"), cases=("hybrid_denial_risk", "size"))
-            .sort_values("avg_denial_risk", ascending=False)
+            filtered_pa.groupby(["plan_type", "risk_bucket"], as_index=False)
+            .agg(avg_exposure=("prior_auth_exposure_score", "mean"), plans=("prior_auth_exposure_score", "size"))
+            .sort_values("avg_exposure", ascending=False)
         )
-        fig = px.bar(risk_by_proc.head(15), x="procedure_type", y="avg_denial_risk", color="payer_type", title="Risk by procedure and payer")
+        fig = px.bar(risk_by_proc.head(15), x="plan_type", y="avg_exposure", color="risk_bucket", title="PA exposure by plan type")
         st.plotly_chart(fig, width="stretch")
 
-    st.markdown("**Documentation strengthening queue**")
-    queue = filtered_pa.sort_values("hybrid_denial_risk", ascending=False)[
+    st.markdown("**Explainable PA prioritization queue**")
+    queue = filtered_pa.sort_values("prior_auth_exposure_score", ascending=False)[
         [
-            "procedure_type",
-            "diagnosis_category",
-            "payer_type",
-            "doc_score",
-            "historical_approval_rate",
-            "step_therapy_flag",
-            "prior_denial_history",
-            "hybrid_denial_risk",
-            "hybrid_risk_bucket",
+            "contract_id",
+            "plan_id",
+            "organization",
+            "plan_name",
+            "plan_type",
+            "medicare_auth_category_count",
+            "non_medicare_auth_category_count",
+            "prior_auth_exposure_score",
+            "risk_bucket",
+            "drivers",
             "recommendation",
         ]
     ].head(25)
@@ -450,35 +450,34 @@ with pa_tab:
 
 with delay_tab:
     section_header(
-        "Auth Delay Risk",
-        "Procedure-payer combinations flagged before submission using CMS timing thresholds.",
+        "Auth Timing Exposure",
+        "Plan-level authorization workload exposure against CMS timing guardrails. This is not an observed delay predictor.",
     )
     c1, c2, c3 = st.columns(3)
-    c1.metric("High-delay combinations", whole(len(delay_high)))
+    c1.metric("High timing exposure plans", whole(len(delay_high)))
     c2.metric("Standard threshold", "7 days")
     c3.metric("Expedited threshold", "72 hours")
 
     fig = px.bar(
-        filtered_delay.sort_values("delay_risk_score", ascending=False),
-        x="procedure_type",
-        y="delay_risk_score",
-        color="payer_type",
-        facet_col="is_expedited",
-        title="Delay risk score by procedure, payer, and urgency",
+        filtered_delay.sort_values("timing_exposure_score", ascending=False).head(30),
+        x="contract_id",
+        y="timing_exposure_score",
+        color="plan_type",
+        title="Highest plan-level authorization timing exposure",
     )
     st.plotly_chart(fig, width="stretch")
 
-    st.markdown("**High-delay combinations to review before submission**")
+    st.markdown("**High-exposure plans to review before submission workflows**")
     st.dataframe(
-        filtered_delay.sort_values("delay_risk_score", ascending=False)[
-            ["procedure_type", "payer_type", "is_expedited", "expected_decision_hours", "cms_decision_limit_hours", "delay_risk_score", "risk_bucket"]
+        filtered_delay.sort_values("timing_exposure_score", ascending=False)[
+            ["contract_id", "plan_id", "organization", "plan_name", "plan_type", "total_auth_category_count", "cms_standard_limit_hours", "cms_expedited_limit_hours", "timing_exposure_score", "risk_bucket", "drivers", "recommendation"]
         ].head(25),
         width="stretch",
         hide_index=True,
     )
     st.download_button(
-        "Download delay-risk queue",
-        data=csv_bytes(filtered_delay.sort_values("delay_risk_score", ascending=False)),
+        "Download timing-exposure queue",
+        data=csv_bytes(filtered_delay.sort_values("timing_exposure_score", ascending=False)),
         file_name="auth_delay_risk_queue.csv",
         mime="text/csv",
     )
@@ -533,9 +532,9 @@ with validation_tab:
         st.write("- CPSC is compacted to plan/state-plan level for dashboard use.")
     with right:
         st.markdown("**Scope guardrails**")
-        st.write("- Forecast is enrollment-based opportunity forecasting.")
-        st.write("- Proxy revenue is not actual collections.")
-        st.write("- PA model is a risk-prioritization demo, not payer production benchmarking.")
+        st.write("- Forecast is enrollment-based opportunity forecasting, not provider revenue forecasting.")
+        st.write("- No PMPM revenue assumption is used.")
+        st.write("- PA and timing outputs are CMS benefit-field exposure scores, not supervised denial or delay predictions.")
     st.download_button(
         "Download validation summary",
         data=csv_bytes(validation),

@@ -245,4 +245,4 @@ This GitHub-readable report was generated from `notebooks/02_ma_enrollment_eda.i
 - CMS suppressed enrollment values are retained and flagged, not dropped.
 - Duplicate business keys are summarized and handled through traceable aggregation.
 - Outliers are flagged for review and retained in the modeling-ready tables.
-- Forecasting uses observed numeric enrollment totals and clearly labels revenue as a PMPM proxy.
+- Forecasting uses observed numeric enrollment totals and does not convert enrollment to assumed PMPM revenue.
