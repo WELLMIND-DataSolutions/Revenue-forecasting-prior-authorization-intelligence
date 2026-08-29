@@ -1,238 +1,118 @@
 # RCM Opportunity Forecasting & Prior Authorization Intelligence
+  <img src="./workflow.png" alt="Workflow Diagram" width="100%"/>
 
-Public CMS-data MVP for RCM teams that need a 90-day enrollment opportunity forecast, prior authorization exposure triage, authorization timing exposure flags, and Medicare Advantage growth opportunity analytics.
+## Overview
 
-The project uses public CMS Medicare Advantage enrollment, penetration, plan, and prior-authorization benefit fields. It does not use synthetic denial labels or PMPM revenue assumptions.
+**RCM Opportunity Forecasting & Prior Authorization Intelligence** is a public CMS-data analytics system designed for Revenue Cycle Management (RCM) teams.
 
-## What the Project Does
+The system analyzes Medicare Advantage enrollment trends, forecasts 90-day enrollment opportunities, identifies prior authorization exposure, evaluates authorization timing exposure, and highlights Medicare Advantage growth opportunities.
 
-This project builds an end-to-end analytics MVP for revenue cycle management teams. It downloads public CMS Medicare Advantage data, prepares modeling-ready enrollment tables, runs EDA, evaluates forecasting models, creates prior authorization and timing-exposure scores from CMS benefit fields, and serves the results in a Streamlit executive dashboard.
+The project uses publicly available CMS Medicare Advantage enrollment, penetration, plan, and prior-authorization benefit data. It does not use PHI, synthetic denial labels, or PMPM revenue assumptions.
 
-Main outputs:
+---
 
-- 90-day observed enrollment opportunity forecast.
-- Growth opportunity analytics by state, county, plan type, and optional CPSC plan data.
-- Prior authorization exposure queue with documentation-strengthening recommendations.
-- Authorization timing exposure queue based on CMS timing guardrails.
-- Validation tables and dashboard-ready exports.
+## Aim
 
-## Why the Project Is Useful
+- Forecast Medicare Advantage enrollment opportunities for the next 90 days
+- Identify enrollment growth opportunities across states, counties, and plans
+- Analyze prior authorization exposure using CMS benefit data
+- Identify potential authorization timing exposure
+- Provide actionable intelligence for RCM teams
+- Present results through an interactive dashboard
 
-RCM teams need early signals before revenue or authorization problems become operational bottlenecks. This MVP shows how public CMS data can support sales and strategy conversations without using PHI, gated payer files, or client-specific claims data.
+---
 
-It is useful because it:
+## Key Features
 
-- Turns fragmented public CMS files into a reproducible analytics pipeline.
-- Separates public-data evidence from unsupported revenue or denial claims.
-- Shows which geographies and plan types are growing.
-- Gives a practical first version of PA exposure and timing-exposure prioritization.
-- Documents limitations clearly so reviewers know what can and cannot be claimed.
+- **90-Day Enrollment Forecast** — Forecasts near-term Medicare Advantage enrollment opportunities
+- **Growth Opportunity Analysis** — Identifies growing states, counties, plan types, and plans
+- **Prior Authorization Intelligence** — Identifies plans with higher prior authorization exposure
+- **Authorization Timing Analysis** — Flags potential timing exposure using CMS timing guardrails
+- **Plan Intelligence** — Provides plan-level Medicare Advantage insights
+- **Data Validation** — Includes validation and data-quality checks
+- **Interactive Dashboard** — Presents insights through a Streamlit dashboard
 
-## How Users Can Get Started
+---
 
-Quick start on Windows PowerShell:
+## Benefits
 
-```powershell
-git clone https://github.com/WELLMIND-DataSolutions/Revenue-forecasting-prior-authorization-intelligence.git
-cd Revenue-forecasting-prior-authorization-intelligence
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r .\requirements.txt
-.\scripts\download_data.ps1
-.\scripts\download_optional_data.ps1
-.\scripts\run_pipeline.ps1
-.\scripts\run_dashboard.ps1
-```
+- **Reduces Manual Analysis** — Converts large public CMS datasets into usable insights
+- **Supports RCM Strategy** — Helps teams identify potential areas for outreach and prioritization
+- **Improves Prioritization** — Highlights plans and markets requiring further attention
+- **Provides Early Signals** — Uses enrollment trends to identify emerging opportunities
+- **Data-Driven Decisions** — Supports strategic decisions using measurable CMS data
+- **Transparent Analysis** — Clearly separates public-data evidence from unsupported revenue or denial claims
 
-Then open:
+---
 
-```text
-http://127.0.0.1:8501
-```
+## Workflow
 
-If you have the local-only notebooks folder, start Jupyter with:
+The system follows this overall process:
 
-```powershell
-.\scripts\start_jupyter.ps1
-```
+**CMS Public Data → Data Processing → EDA & Validation → Enrollment Forecasting → Prior Authorization Analysis → Authorization Timing Analysis → Growth Opportunity Analysis → Streamlit Dashboard**
 
-## Where Users Can Get Help
+### Workflow Steps
 
-Use these project files first:
+**1. CMS Data Collection**  
+Public Medicare Advantage enrollment, plan, penetration, and benefit data is collected from CMS.
 
-- `README.md`: setup, install, run, dashboard, and repository structure.
-- `docs/dataset_register.md`: dataset list and source notes.
-- `docs/assumptions.md`: modeling and business assumptions.
-- `docs/validation_checklist.md`: validation checklist.
-- `docs/02_ma_enrollment_eda_visual_report.md`: GitHub-readable EDA report with static graphs.
+**2. Data Processing**  
+The collected data is cleaned, standardized, and prepared for analysis.
 
-If something fails locally, check:
+**3. EDA & Validation**  
+Enrollment trends, geographic patterns, plan information, missing values, and data quality are analyzed.
 
-- Whether `.venv` is activated.
-- Whether data scripts have downloaded files into `data/raw/`.
-- Whether `.\scripts\run_pipeline.ps1` has created `data/processed/` and `reports/tables/`.
-- Whether Streamlit is running at `http://127.0.0.1:8501`.
+**4. Enrollment Forecasting**  
+Historical Medicare Advantage enrollment is analyzed to generate a **90-day enrollment forecast**.
 
-For repository collaboration, open a GitHub issue or contact the maintainers/contributors listed below.
+**5. Prior Authorization Analysis**  
+CMS benefit fields are analyzed to identify plans with higher prior authorization exposure and generate prioritization insights.
 
-## Who Maintains and Contributes
+**6. Authorization Timing Analysis**  
+Plans are evaluated against CMS authorization timing guardrails to identify potential timing exposure.
 
-Maintained by:
+**7. Growth Opportunity Analysis**  
+Medicare Advantage growth is analyzed across states, counties, plan types, and plans to identify potential opportunities.
 
-- WELLMIND DataSolutions project team.
-- Shahneela Zafar / project contributor.
+**8. Dashboard**  
+The final analytics are presented through an interactive **Streamlit executive dashboard**.
 
-Contributions can include:
-
-- Data-source updates.
-- Modeling improvements.
-- Dashboard improvements.
-- Documentation fixes.
-- Validation and testing additions.
-
-Before contributing, keep the core guardrail: do not overclaim public CMS data as actual provider collections, remits, or payer-specific PA outcomes.
-
-## Repository File Guide
-
-| File | Audience | Tells |
-| --- | --- | --- |
-| `README.md` | User / Developer | How to set up, install, run the pipeline, launch dashboard, and understand repo structure. |
-| `docs/` | Reviewer / Developer | Dataset register, assumptions, validation checklist, and rendered EDA report. |
-| `src/dashboard/app.py` | User / Developer | Streamlit dashboard implementation. |
-
-## Business Objective
-
-Client hook:
-
-> We show where CMS enrollment opportunity is moving and which Medicare Advantage plans have higher prior-authorization exposure, so RCM teams can prioritize outreach and documentation workflows.
-
-MVP deliverables covered:
-
-- Forecast dashboard with CMS trend lines and 90-day projection.
-- Prior authorization exposure queue with documentation recommendations.
-- Authorization timing exposure table based on CMS timing guardrails.
-- Growth opportunity report by geography and plan.
-- Validation summary with assumptions, model metrics, and public-data guardrails.
-
-RCM problems covered:
-
-- Prior authorization exposure prioritization
-- Authorization timing exposure
-- Enrollment opportunity forecasting
-- Growth opportunity analytics
+---
 
 ## Current Results
 
-- CMS enrollment data window: January 2024 through May 2026.
-- National observed MA enrollment increased from about 33.48M to 36.08M.
-- Forecast target: `observed_enrollment`.
-- Best forecast model on 3-month holdout: `linear_drift`.
-- Observed-enrollment holdout MAPE: about `0.048%`.
-- PA exposure engine reviews CMS PBP benefit fields; it is not a denial predictor.
-- Auth timing module flags high-exposure plans against CMS standard and expedited timing guardrails.
-- Suppressed CMS rows are retained and flagged instead of dropped.
-- Outliers are flagged for review instead of removed.
+- CMS enrollment data covers **January 2024 through May 2026**
+- National observed Medicare Advantage enrollment increased from approximately **33.48M to 36.08M**
+- Forecast target: **observed enrollment**
+- Forecast horizon: **90 days**
+- Best-performing holdout model: **Linear Drift**
+- Holdout MAPE: approximately **0.048%**
+- Prior authorization analysis is based on **CMS PBP benefit fields**
+- Authorization timing analysis uses **CMS timing guardrails**
 
-## Project Structure
+---
 
-```text
-rcm-cms-mvp/
-  docs/
-    assumptions.md
-    dataset_register.md
-    validation_checklist.md
-  scripts/
-    download_data.ps1
-    download_optional_data.ps1
-    run_pipeline.ps1
-    run_dashboard.ps1
-    start_jupyter.ps1
-  src/
-    config.py
-    data/
-    dashboard/
-    models/
-  README.md
-  requirements.txt
-```
+## Use Cases
 
-Generated local folders such as `data/raw/`, `data/processed/`, `reports/tables/`, `reports/figures/`, `models/`, `.venv/`, notebooks, and logs are intentionally ignored by Git.
+- RCM opportunity identification
+- Medicare Advantage market analysis
+- Enrollment growth forecasting
+- Prior authorization exposure prioritization
+- Authorization timing analysis
+- Plan-level intelligence
+- Geographic growth analysis
+- Strategic RCM outreach
 
-## Setup
+---
 
-From the project folder:
+## Project Goal
 
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r .\requirements.txt
-```
+The goal of **RCM Opportunity Forecasting & Prior Authorization Intelligence** is to transform public Medicare Advantage data into practical RCM intelligence.
 
-Optional local-only dependencies, notebooks, and presentation/research notes are not published to the Wellmind GitHub repository.
+> **Enrollment Trends → Forecasting → Prior Authorization Intelligence → Timing Exposure → Growth Opportunities → RCM Decision Support**
 
-## Download Data
+---
 
-```powershell
-.\scripts\download_data.ps1
-.\scripts\download_optional_data.ps1
-```
+## Workflow Diagram
 
-Core sources include:
-
-- CMS Medicare Advantage state/county penetration files.
-- CMS MA plan directory.
-- CMS PBP benefits JSON.
-- CMS prior authorization reporting template and CMS-0057-F related material.
-- CMS MA step therapy memo.
-- Monthly MA state/county/plan-type enrollment from January 2024 through May 2026.
-
-Optional source:
-
-- CPSC monthly enrollment by contract, plan, state, and county for plan-level growth intelligence.
-
-## Run Pipeline
-
-```powershell
-.\scripts\run_pipeline.ps1
-```
-
-The pipeline runs:
-
-- MA enrollment ingestion and quality processing.
-- Forecast model training/evaluation.
-- Prior authorization risk scoring demo.
-- Auth delay risk scoring.
-- Validation summary generation.
-
-## Run Dashboard
-
-```powershell
-.\scripts\run_dashboard.ps1
-```
-
-Open:
-
-```text
-http://127.0.0.1:8501
-```
-
-Dashboard sections:
-
-- Executive View
-- 90-Day Forecast
-- Growth Opportunity
-- Prior Auth Intelligence
-- Auth Delay Risk
-- Plan Intelligence
-- Validation
-
-## Git Workflow
-
-```powershell
-git status
-git add .
-git commit -m "Update dashboard and project documentation"
-git push
-```
+![RCM Opportunity Forecasting & Prior Authorization Intelligence Workflow](docs/workflow.png)
