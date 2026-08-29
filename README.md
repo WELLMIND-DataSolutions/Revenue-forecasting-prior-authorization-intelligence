@@ -110,8 +110,4 @@ The goal of **RCM Opportunity Forecasting & Prior Authorization Intelligence** i
 
 > **Enrollment Trends → Forecasting → Prior Authorization Intelligence → Timing Exposure → Growth Opportunities → RCM Decision Support**
 
----
 
-## Workflow Diagram
-
-![RCM Opportunity Forecasting & Prior Authorization Intelligence Workflow](docs/workflow.png)
