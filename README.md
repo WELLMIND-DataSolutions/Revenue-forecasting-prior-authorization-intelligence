@@ -1,6 +1,5 @@
 # RCM Opportunity Forecasting & Prior Authorization Intelligence
-  <img src="./workflow.png" alt="Workflow Diagram" width="100%"/>
-
+![Workflow Diagram](Workflow.png)
 ## Overview
 
 **RCM Opportunity Forecasting & Prior Authorization Intelligence** is a public CMS-data analytics system designed for Revenue Cycle Management (RCM) teams.
